@@ -1,0 +1,81 @@
+{{- range .Values.namespaceSsoUsers }}
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+  name: argo-sso-admin
+  namespace: {{ .namespaceName }}
+rules:
+- apiGroups:
+  - argoproj.io
+  resources:
+  - workflows
+  - workflows/finalizers
+  - workfloweventbindings
+  - workfloweventbindings/finalizers
+  - workflowtemplates
+  - workflowtemplates/finalizers
+  - cronworkflows
+  - cronworkflows/finalizers
+  - clusterworkflowtemplates
+  - clusterworkflowtemplates/finalizers
+  - workflowtasksets
+  - workflowtasksets/finalizers
+  verbs:
+  - create
+  - delete
+  - deletecollection
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/service-account-token
+metadata:
+  name: argo-sso-admin
+  namespace: {{ .namespaceName }} 
+  annotations:
+    kubernetes.io/service-account.name: "argo-sso-admin"
+    kubernetes.io/service-account.namespace: "{{ .namespaceName }}"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: argo-sso-admin
+  namespace: {{ .namespaceName }}
+  annotations:
+    workflows.argoproj.io/rbac-rule:  "'{{ .ssoAdminGroup}}' in groups"
+    workflows.argoproj.io/rbac-rule-precedence: "1"
+secrets:
+   - name: argo-sso-admin
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: argo-sso-admin-binding
+  namespace: {{ .namespaceName }} 
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name:  argo-sso-admin
+subjects:
+- kind: ServiceAccount
+  name: argo-sso-admin
+  namespace: {{ .namespaceName }}
+
+{{- end }}

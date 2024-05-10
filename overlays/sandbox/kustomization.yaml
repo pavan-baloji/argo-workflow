@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+helmGlobals:
+  chartHome: charts
+
+helmCharts:
+- name: argo-workflows
+  version: 0.41.4
+  valuesFile: values.yaml
+  releaseName: argo-workflows
+  namespace: argo
+  repo: oci://crdataloopfoundationsandboxwesteurope.azurecr.io/helm
+  #repo: https://crdataloopfoundationsandboxwesteurope.azurecr.io/helm
